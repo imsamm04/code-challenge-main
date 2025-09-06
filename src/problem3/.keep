@@ -67,7 +67,8 @@ interface WalletBalance {
 interface Props extends BoxProps {}
 
 // Extracted outside to avoid recreation
-const getPriority = (blockchain: string): number => {
+//Solution A: Switch statement
+ const getPriority = (blockchain: string): number => {
   switch (blockchain) {
     case "Osmosis":
       return 100;
@@ -82,6 +83,19 @@ const getPriority = (blockchain: string): number => {
       return -99;
   }
 };
+
+// Option B: lookup map (cleaner, easier to maintain when list grows)
+// const PRIORITY_MAP: Record<string, number> = {
+//     Osmosis: 100,
+//     Ethereum: 50,
+//     Arbitrum: 30,
+//     Zilliqa: 20,
+//     Neo: 20,
+//   };
+  
+//   const getPriorityMap = (blockchain: string): number => {
+//     return PRIORITY_MAP[blockchain] ?? -99;
+//   };
 
 export const WalletPage: React.FC<Props> = (props) => {
   const { ...rest } = props;
