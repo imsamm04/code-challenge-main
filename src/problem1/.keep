@@ -1,0 +1,105 @@
+/**
+* Problem 1: Three ways to sum to n
+*
+* Provide 3 unique implementations of the following function in JavaScript.
+* Input: n - any integer
+* Assuming this input will always produce a result lesser than Number.MAX_SAFE_INTEGER.
+* Output: return - summation to n, i.e. sum_to_n(5) === 1 + 2 + 3 + 4 + 5 === 15.
+* 
+* TODO: Maybe add more edge cases?
+* Note: This is for big tech interview prep
+*/
+
+// Method A: Using traditional for loop - most straightforward approach
+var sum_to_n_a = function(n) {
+    let sum = 0;
+    for (let i = 1; i <= n; i++) {
+        sum += i; // simple accumulation
+    }
+    return sum;
+};
+
+// Method B: Using mathematical formula - learned this in discrete math
+// Gauss formula: n*(n+1)/2
+var sum_to_n_b = function(n) {
+    return n * (n + 1) / 2;
+};
+
+// Method C: Using recursion - elegant but might be slow for large n
+var sum_to_n_c = function(n) {
+    // base cases
+    if (n <= 0) return 0;
+    if (n === 1) return 1;
+    
+    // recursive case
+    return n + sum_to_n_c(n - 1);
+};
+
+// Method D: Using while loop - alternative to for loop
+var sum_to_n_d = function(n) {
+    let sum = 0;
+    let i = 1;
+    while (i <= n) {
+        sum += i;
+        i++;
+    }
+    return sum;
+};
+
+
+// Test cases to verify all implementations
+console.log("Testing Problem 1 - Four ways to sum to n:");
+console.log("==========================================");
+// Let's see if all methods give same results
+
+const testCases = [1, 5, 10, 100, 0]; // including edge case n=0
+
+testCases.forEach(n => {
+    const resultA = sum_to_n_a(n);
+    const resultB = sum_to_n_b(n);
+    const resultC = sum_to_n_c(n);
+    const resultD = sum_to_n_d(n);
+
+    console.log(`n = ${n}:`);
+    console.log(`  Method A (for loop): ${resultA}`);
+    console.log(`  Method B (formula): ${resultB}`);
+    console.log(`  Method C (recursion): ${resultC}`);
+    console.log(`  Method D (while loop): ${resultD}`);
+    
+    const allEqual = resultA === resultB && resultB === resultC && resultC === resultD;
+    console.log(`  All methods equal: ${allEqual}`);
+    console.log("");
+});
+
+// Performance comparison for larger numbers
+console.log("Performance test with n = 10000:");
+console.log("================================");
+// This might crash with recursion method...
+
+const largeN = 10000;
+
+console.time("Method A (for loop)");
+const resultA = sum_to_n_a(largeN);
+console.timeEnd("Method A (for loop)");
+
+console.time("Method B (formula)");
+const resultB = sum_to_n_b(largeN);
+console.timeEnd("Method B (formula)");
+
+console.time("Method C (recursion)");
+const resultC = sum_to_n_c(largeN); // This might crash!
+console.timeEnd("Method C (recursion)");
+
+console.time("Method D (while loop)");
+const resultD = sum_to_n_d(largeN);
+console.timeEnd("Method D (while loop)");
+
+console.log(`All results equal: ${resultA === resultB && resultB === resultC && resultC === resultD}`);
+// console.log(`Result: ${resultA}`); // commented out for now
+
+// Summary:
+// - Method A: O(n) time, O(1) space - good for understanding
+// - Method B: O(1) time, O(1) space - most efficient
+// - Method C: O(n) time, O(n) space - elegant but limited by stack size
+// - Method D: O(n) time, O(1) space - alternative to for loop
+

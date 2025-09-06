@@ -1,0 +1,127 @@
+/**
+ * Problem 3: Messy React - Code Review & Refactor
+ *
+ * ==========================================================
+ * ISSUES FOUND
+ * ==========================================================
+ *
+ *  Critical Bugs
+ * 1. Undefined variable lhsPriority
+ *    - Causes runtime error inside filter.
+ *
+ * 2. Accessing balance.blockchain not defined in WalletBalance interface.
+ *    - TypeScript typing is wrong, possible runtime bug.
+ *
+ * 3. Logic error in filter condition
+ *    - Returns true when amount <= 0, should be false
+ *    - Missing return statement in sort function
+ *
+ * 4. Potential null/undefined access
+ *    - prices[balance.currency] could be undefined
+ *
+ *  Computational Inefficiencies
+ * 1. useMemo depends on prices unnecessarily (sorting does not use prices).
+ * 2. Mapping sortedBalances twice (formattedBalances and rows).
+ * 3. toFixed() without precision -> defaults to 0 decimals.
+ * 4. getPriority called multiple times for same blockchain in sort
+ *
+ *  Anti-Patterns & Readability Issues
+ * 1. Inline getPriority function re-created on every render.
+ * 2. Sorting logic verbose; can be simplified.
+ * 3. Keys in list use index -> unstable.
+ * 4. Dead code: children unused, formattedBalances unused.
+ * 5. Inconsistent variable naming (lhs/rhs vs left/right)
+ * 6. Missing error handling for edge cases
+ * 7. TypeScript issues: 'any' type for blockchain parameter
+ * 8. Missing proper typing for price object access
+ *
+ * Improvements
+ * - Fix interfaces (add blockchain).
+ * - Extract getPriority outside component.
+ * - Fix useMemo deps.
+ * - Merge formatting + row creation into one pass.
+ * - Use stable keys (currency).
+ * - Use Intl.NumberFormat or toLocaleString.
+ * - Remove dead code.
+ * - Add null checks for price lookups.
+ * - Fix filter logic to properly exclude zero/negative amounts.
+ * - Add proper error boundaries.
+ * - Consider memoizing getPriority results for performance.
+ *
+ * ==========================================================
+ * REFACTORED CODE
+ * ==========================================================
+ */
+
+import React, { useMemo } from "react";
+import { BoxProps } from "@mui/material";
+import { WalletRow } from "./WalletRow";
+import { useWalletBalances, usePrices } from "./hooks";
+
+interface WalletBalance {
+  currency: string;
+  amount: number;
+  blockchain: string; // Added for correctness
+}
+
+interface Props extends BoxProps {}
+
+// Extracted outside to avoid recreation
+const getPriority = (blockchain: string): number => {
+  switch (blockchain) {
+    case "Osmosis":
+      return 100;
+    case "Ethereum":
+      return 50;
+    case "Arbitrum":
+      return 30;
+    case "Zilliqa":
+    case "Neo":
+      return 20;
+    default:
+      return -99;
+  }
+};
+
+export const WalletPage: React.FC<Props> = (props) => {
+  const { ...rest } = props;
+  const balances = useWalletBalances();
+  const prices = usePrices();
+
+  // ✅ Memoize sorting only on balances
+  const sortedBalances = useMemo(() => {
+    return balances
+      .filter((balance) => {
+        const priority = getPriority(balance.blockchain);
+        return priority > -99 && balance.amount > 0;
+      })
+      .sort(
+        (lhs, rhs) =>
+          getPriority(rhs.blockchain) - getPriority(lhs.blockchain)
+      );
+  }, [balances]);
+
+  // Single pass: format + build row
+  const rows = useMemo(() => {
+    return sortedBalances.map((balance) => {
+      const usdValue = (prices[balance.currency] ?? 0) * balance.amount;
+      const formattedAmount = balance.amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      });
+
+      return (
+        <WalletRow
+          className="wallet-row"
+          key={balance.currency} // Stable key
+          amount={balance.amount}
+          usdValue={usdValue}
+          formattedAmount={formattedAmount}
+        />
+      );
+    });
+  }, [sortedBalances, prices]);
+
+  return <div {...rest}>{rows}</div>;
+};
+
